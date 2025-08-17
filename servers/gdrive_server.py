@@ -59,12 +59,13 @@ def gdrive_get_first_n_files(files_to_print: int = 10) -> str:
         return f"An error occured: {error}"
 
 @mcp.tool()
-def gdrive_download_file(user_file_id: str, output_file_name: str) -> str:
+def gdrive_download_file(user_file_id: str, output_file_name: str, is_binary: bool = True) -> str:
     """
     Download a specific file from the user's Google Drive and save to a user specified path
     Args:
         user_file_id (str): the file_id of the file that will be downloaded
         output_file_name (str): the path on the local machine that the downloaded file will be written to
+        is_binary (bool): Boolean that is true if the file being downloaded has binary content, False otherwise.
     Returns:
         file_io (str): The downloaded file's io content if it exists, otherwise a message of failure.
     """
@@ -72,7 +73,10 @@ def gdrive_download_file(user_file_id: str, output_file_name: str) -> str:
     # create drive api client
         file_id = user_file_id
         # pylint: disable=maybe-no-member
-        request = service.files().get_media(fileId=file_id)
+        if is_binary:
+            request = service.files().get_media(fileId=file_id)
+        else:
+            request = service.files().export(fileId = file_id, mimeType = 'application/pdf')
         file = io.BytesIO()
         downloader = MediaIoBaseDownload(file, request)
         done = False
@@ -185,5 +189,6 @@ def gdrive_share_files(file_id: str, emails: list[str], role: str = "reader") ->
         return f"An error occurred: {error}"
 
 if __name__ == "__main__":
-    vandertramp = (gdrive_search_file(query="name contains 'VANDERTRAMP'"))[0]
-    gdrive_share_files(vandertramp['id'], ['asphaltlord123@gmail.com'], 'reader')
+    print("Starting Google Drive server...")
+    mcp.run(transport='stdio')
+    # print(gdrive_download_file('1lessNdwhWzgHgfTHQ_X6ajI0w61Cs6BORNp9BIeHaY8', 'example.pdf', False))
