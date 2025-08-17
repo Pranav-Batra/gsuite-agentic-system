@@ -142,10 +142,9 @@ def gcal_create_event_in_main_calendar(name: str, description: str, start_time: 
     print('Event created: %s' % (event.get('htmlLink')))
     return f"Event created: {event.get('htmlLink')}"
 
-
 if __name__ == "__main__":
     # gcal_create_event_in_main_calendar('test event', 'this event is testing the gcal api', "Aug 5 2025 10:15AM", "Aug 5 2025 10:45AM")
-    print("Starting clendar server...")
+    print("Starting Google Calendar server...")
     mcp.run(transport='stdio')
 
 # @mcp.resource("greeting://{name}")

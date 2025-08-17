@@ -4,7 +4,7 @@ from mcp import StdioServerParameters
 import os
 from dotenv import load_dotenv
 
-load_dotenv(r'D:\Users\pranav.batra\Desktop\mcp_crew_agent\.env', override=True)
+load_dotenv('/Users/pranav/Desktop/GSuite-MCP/.env', override=True)
 
 # Setup LLM (could be Claude or another, this part is fine)
 llm = LLM(
@@ -25,7 +25,12 @@ gcal_server_params = StdioServerParameters(
     args=["gcalendar_server.py"]
 )
 
-server_params_list = [gmail_server_params, gcal_server_params]
+gdrive_server_params = StdioServerParameters(
+    command = 'python',
+    args = ['gdrive_server.py']
+)
+
+server_params_list = [gmail_server_params, gcal_server_params, gdrive_server_params]
 
 # Connect to the MCP servers and expose tools
 with MCPServerAdapter(server_params_list) as tools:
@@ -34,6 +39,7 @@ with MCPServerAdapter(server_params_list) as tools:
     # Filter tools by topic
     gcal_tools = [tool for tool in tools if tool.name.startswith('gcal')]
     gmail_tools = [tool for tool in tools if tool.name.startswith('gmail')]
+    gdrive_tools = [tool for tool in tools if tool.name.startswith('gdrive')]
 
     print(gcal_tools)
     print(gmail_tools)
@@ -57,6 +63,15 @@ with MCPServerAdapter(server_params_list) as tools:
         verbose=False
     )
 
+    gdrive_agent = Agent(
+        role="Google Drive API Expert",
+        goal="Effectively interact with a person's files through the Google Drive API",
+        backstory="You are a master of using the Google Drive API. Your role is to interact with the Google Drive API according to the user's wishes.",
+        tools=gmail_tools,
+        llm=llm,
+        verbose=False
+    )
+
     gcal_task = Task(
     description="Use google calendar according to the user's prompt: {user_prompt}",
     agent=gcal_agent,
@@ -70,14 +85,20 @@ with MCPServerAdapter(server_params_list) as tools:
         expected_output="Record of what you did with the Gmail API."
     )
 
+    gdrive_task = Task(
+        description="Execute this Google Drive API related request from the user: {user_prompt}",
+        agent=gmail_agent,
+        expected_output="Record of what you did with the Google Drive API."
+    )
+
     # Define Manager Agent (no tools)
     manager_agent = Agent(
         role="Task Manager",
         goal="Understand the user request and delegate to the appropriate agent.",
         backstory=(
-            "You're responsible for coordinating between a Gmail expert and a Google Calendar expert. "
+            "You're responsible for coordinating between a Gmail expert, a Google Calendar expert, and a Google Drive expert. "
             "You never solve problems yourself — instead, you decide who is best suited for the task and pass the problem to them. "
-            "The Gmail expert handles anything related to the Gmail API. The Google Calendar Expert handles anything related to the Google Calendar API."
+            "The Gmail expert handles anything related to the Gmail API. The Google Calendar Expert handles anything related to the Google Calendar API. The Google Drive Expert handles anything related to the Google Drive API."
         ),
         llm=llm,
         verbose=True
@@ -98,8 +119,8 @@ with MCPServerAdapter(server_params_list) as tools:
 
     # Create Crew and run
     crew = Crew(
-        agents=[gmail_agent, gcal_agent],
-        tasks=[gmail_task, gcal_task],
+        agents=[gmail_agent, gcal_agent, gdrive_agent],
+        tasks=[gmail_task, gcal_task, gdrive_task],
         verbose=True,
         manager_agent = manager_agent,
         process=Process.hierarchical

@@ -124,6 +124,6 @@ def gmail_send_message(to: str, sender: str, subject: str, content: str):
     return f'Sent message: {send_message}'
 
 if __name__ == '__main__':
-    print("Running gmail server...")
+    print("Starting Gmail server...")
     # gmail_send_message('asphaltlord123@gmail.com', 'pranav.batra2006@gmail.com', 'Test', 'This is a test email')
     mcp.run(transport='stdio')
