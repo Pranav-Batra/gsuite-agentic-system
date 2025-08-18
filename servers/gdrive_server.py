@@ -13,6 +13,7 @@ from googleapiclient.http import MediaIoBaseDownload
  
 
 mcp = FastMCP("GDRIVE")
+PORT = 8081
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/drive"]
@@ -22,7 +23,7 @@ SCOPES = ["https://www.googleapis.com/auth/drive"]
 creds = None
 if not creds or creds.valid:
     flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-    creds = flow.run_local_server(port=8080)
+    creds = flow.run_local_server(port=PORT)
 
     with open("token.json", "w") as token:
         token.write(creds.to_json())

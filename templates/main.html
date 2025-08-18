@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Request</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding-top: 50px;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            text-align: center;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            gap: 15px;
+        }
+        label {
+            font-size: 1.1em;
+            color: #555;
+            align-self: flex-start;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1em;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+        input[type="text"]:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        button {
+            padding: 12px 25px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #result-box {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #fafafa;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-size: 1em;
+            line-height: 1.6;
+            min-height: 50px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Submit a Request</h1>
+        <div class="form-container">
+            <form id="requestForm" action="/main/" method="post">
+                <label for="user_input">Enter text:</label>
+                <input type="text" id="user_input" name="user_input" required>
+                <button type="submit" id="submitButton">Submit</button>
+            </form>
+            <div id="result-box">
+                <span id="result-text">Your results will appear here.</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('requestForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevents the default form submission
+
+            const form = event.target;
+            const formData = new FormData(form);
+            const submitButton = document.getElementById('submitButton');
+            const resultText = document.getElementById('result-text');
+
+            // Set loading state
+            submitButton.disabled = true;
+            submitButton.innerText = 'Loading...';
+            resultText.innerText = 'Processing your request...';
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update the result box with the final output
+                if (data.error) {
+                    resultText.innerText = 'Error: ' + data.error;
+                } else {
+                    resultText.innerText = data.result; // Assuming the result is the top-level value
+                }
+            })
+            .catch(error => {
+                // Handle network errors
+                resultText.innerText = 'An error occurred. Please check the server logs.';
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                // Reset button state
+                submitButton.disabled = false;
+                submitButton.innerText = 'Submit';
+            });
+        });
+    </script>
+</body>
+</html>

@@ -12,6 +12,7 @@ from dateutil import parser
 import pytz
 
 mcp = FastMCP("GCAL")
+PORT = 8081
 
 
 # If modifying these scopes, delete the file token.json.
@@ -26,7 +27,7 @@ if not creds or not creds.valid:
     flow = InstalledAppFlow.from_client_secrets_file(
         "credentials.json", SCOPES
     )
-    creds = flow.run_local_server(port=8080)
+    creds = flow.run_local_server(port=PORT)
     
     # Save the credentials for the next run
     with open("token.json", "w") as token:
@@ -54,7 +55,7 @@ def main():
         flow = InstalledAppFlow.from_client_secrets_file(
             "credentials.json", SCOPES
         )
-        creds = flow.run_local_server(port=8080)
+        creds = flow.run_local_server(port=PORT)
         
         # Save the credentials for the next run
         with open("token.json", "w") as token:

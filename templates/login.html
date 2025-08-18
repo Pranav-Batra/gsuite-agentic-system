@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Login with Google</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+  </head>
+  <body>
+    <h1>Login Test</h1>
+    <div id="g_id_onload"
+         data-client_id="HIDDEN_ID.com"
+         data-callback="handleCredentialResponse">
+    </div>
+
+    <div class="g_id_signin" data-type="standard"></div>
+
+    <script>
+      async function handleCredentialResponse(response) {
+        // response.credential is the Google ID token
+        const id_token = response.credential;
+        console.log("Got Google ID Token:", id_token);
+
+        const res = await fetch("http://localhost:8080/auth/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id_token })
+        });
+
+        const data = await res.json();
+        console.log("Backend response:", data);
+        alert(JSON.stringify(data));
+      }
+    </script>
+  </body>
+</html>
