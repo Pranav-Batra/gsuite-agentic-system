@@ -1,34 +1,48 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Login with Google</title>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-  </head>
-  <body>
-    <h1>Login Test</h1>
-    <div id="g_id_onload"
-         data-client_id="HIDDEN_ID.com"
-         data-callback="handleCredentialResponse">
-    </div>
-
-    <div class="g_id_signin" data-type="standard"></div>
-
-    <script>
-      async function handleCredentialResponse(response) {
-        // response.credential is the Google ID token
-        const id_token = response.credential;
-        console.log("Got Google ID Token:", id_token);
-
-        const res = await fetch("http://localhost:8080/auth/google", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id_token })
-        });
-
-        const data = await res.json();
-        console.log("Backend response:", data);
-        alert(JSON.stringify(data));
-      }
-    </script>
-  </body>
-</html>
+   <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>Login</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          background: linear-gradient(to right, #667eea, #764ba2);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          margin: 0;
+          color: white;
+        }
+        .card {
+          background: white;
+          color: #333;
+          border-radius: 12px;
+          padding: 40px;
+          box-shadow: 0px 6px 15px rgba(0,0,0,0.2);
+          text-align: center;
+        }
+        a.button {
+          display: inline-block;
+          margin-top: 20px;
+          padding: 12px 24px;
+          border-radius: 6px;
+          background-color: #4285F4;
+          color: white;
+          text-decoration: none;
+          font-weight: bold;
+          transition: background 0.2s ease;
+        }
+        a.button:hover {
+          background-color: #3367D6;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <h2>Welcome</h2>
+        <p>Sign in to access Google API tools</p>
+        <a class="button" href="/login">Sign in with Google</a>
+      </div>
+    </body>
+    </html>

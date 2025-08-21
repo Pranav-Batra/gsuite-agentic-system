@@ -1,5 +1,4 @@
-import os.path
-import datetime
+import argparse
 from mcp.server.fastmcp import FastMCP
 
 from google.auth.transport.requests import Request
@@ -23,45 +22,27 @@ mcp = FastMCP("GMAIL")
 # If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/gmail.compose"]
 PORT = 8081
+def get_credentials():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--refresh-token', required=True)
+    parser.add_argument('--client-id', required=True)
+    parser.add_argument('--client-secret', required=True)
+    args = parser.parse_args()
 
-creds = None
-if not creds or creds.valid:
-    flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-    creds = flow.run_local_server(port=PORT)
+    creds = Credentials(
+        token=None,
+        refresh_token = args.refresh_token,
+        token_uri = "https://oauth2.googleapis.com/token",
+        client_id = args.client_id,
+        client_secret = args.client_secret,
+        scopes=SCOPES
+    )
+    return creds
 
-    with open("token.json", "w") as token:
-        token.write(creds.to_json())
+creds = get_credentials()
 service = build("gmail", "v1", credentials=creds)
 
 
-# def main():
-#     creds = None
-# # if os.path.exists('token.json'):
-# #     creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-#     if not creds or not creds.valid:
-#         flow = InstalledAppFlow.from_client_secrets_file(
-#             "credentials.json", SCOPES
-#         )
-#         creds = flow.run_local_server(port=8080)
-        
-#         # Save the credentials for the next run
-#         with open("token.json", "w") as token:
-#             token.write(creds.to_json())
-    
-#     try:
-#         service = build("gmail", "v1", credentials = creds)
-#         results = service.users().labels().list(userId="me").execute()
-#         labels = results.get("labels", [])
-
-#         if not labels:
-#             print("No labels found")
-#             return
-#         print("Labels:")
-#         for label in labels:
-#             print(label['name'])    
-        
-#     except HttpError as error:
-#         print(f'An error occured: {error}')
 
 def gmail_create_message(to: str, sender: str, subject: str, content: str):
     """

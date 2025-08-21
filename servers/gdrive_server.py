@@ -1,6 +1,5 @@
-import os.path
 import io
-
+import argparse
 from mcp.server.fastmcp import FastMCP
 
 import google.auth
@@ -15,19 +14,29 @@ from googleapiclient.http import MediaIoBaseDownload
 mcp = FastMCP("GDRIVE")
 PORT = 8081
 
-# If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 
 # If modifying these scopes, delete the file token.json
+def get_credentials():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--refresh-token', required=True)
+    parser.add_argument('--client-id', required=True)
+    parser.add_argument('--client-secret', required=True)
+    args = parser.parse_args()
 
-creds = None
-if not creds or creds.valid:
-    flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-    creds = flow.run_local_server(port=PORT)
+    creds = Credentials(
+        token=None,
+        refresh_token = args.refresh_token,
+        token_uri = "https://oauth2.googleapis.com/token",
+        client_id = args.client_id,
+        client_secret = args.client_secret,
+        scopes=SCOPES
+    )
+    return creds
 
-    with open("token.json", "w") as token:
-        token.write(creds.to_json())
+creds = get_credentials()
 service = build("drive", "v3", credentials=creds)
+
 
 @mcp.tool()
 def gdrive_get_first_n_files(files_to_print: int = 10) -> str:
@@ -192,4 +201,3 @@ def gdrive_share_files(file_id: str, emails: list[str], role: str = "reader") ->
 if __name__ == "__main__":
     print("Starting Google Drive server...")
     mcp.run(transport='stdio')
-    # print(gdrive_download_file('1lessNdwhWzgHgfTHQ_X6ajI0w61Cs6BORNp9BIeHaY8', 'example.pdf', False))

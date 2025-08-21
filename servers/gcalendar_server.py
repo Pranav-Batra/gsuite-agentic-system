@@ -1,5 +1,5 @@
 import os.path
-import datetime
+import argparse
 from mcp.server.fastmcp import FastMCP
 
 from google.auth.transport.requests import Request
@@ -19,21 +19,25 @@ PORT = 8081
 # This scope provides read-only access to calendars.
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
+def get_credentials():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--refresh-token', required=True)
+    parser.add_argument('--client-id', required=True)
+    parser.add_argument('--client-secret', required=True)
+    args = parser.parse_args()
 
-creds = None
-# if os.path.exists('token.json'):
-#     creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-if not creds or not creds.valid:
-    flow = InstalledAppFlow.from_client_secrets_file(
-        "credentials.json", SCOPES
+    creds = Credentials(
+        token=None,
+        refresh_token = args.refresh_token,
+        token_uri = "https://oauth2.googleapis.com/token",
+        client_id = args.client_id,
+        client_secret = args.client_secret,
+        scopes=SCOPES
     )
-    creds = flow.run_local_server(port=PORT)
-    
-    # Save the credentials for the next run
-    with open("token.json", "w") as token:
-        token.write(creds.to_json())
+    return creds
 
-service = build('calendar', 'v3', credentials = creds)
+creds = get_credentials()
+service = build("calendar", "v3", credentials=creds)
 
 
 def main():

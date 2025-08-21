@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv('/Users/pranav/Desktop/GSuite-MCP/.env', override=True)
 
-def make_request(request: str):
+def make_request(request: str, user_credentials: dict):
     print("Request is starting.")
 # Setup LLM
     llm = LLM(
@@ -15,21 +15,30 @@ def make_request(request: str):
 
     gmail_server_params = StdioServerParameters(
         command="python",
-        args=["servers/gmail_server.py"]
+        args=["servers/gmail_server.py",
+              '--refresh-token', user_credentials['refresh_token'],
+            '--client-id', user_credentials['client_id'],
+            '--client-secret', user_credentials['client_secret']]
     )
 
     gcal_server_params = StdioServerParameters(
         command="python",
-        args=["servers/gcalendar_server.py"]
+        args=["servers/gcalendar_server.py",
+              '--refresh-token', user_credentials['refresh_token'],
+            '--client-id', user_credentials['client_id'],
+            '--client-secret', user_credentials['client_secret']]
     )
 
     gdrive_server_params = StdioServerParameters(
         command = 'python',
-        args = ['servers/gdrive_server.py']
+        args = ['servers/gdrive_server.py',
+                '--refresh-token', user_credentials['refresh_token'],
+            '--client-id', user_credentials['client_id'],
+            '--client-secret', user_credentials['client_secret']]
     )
 
     server_params_list = [gmail_server_params, gcal_server_params, gdrive_server_params]
-    print(f'Server parmas list has been established: {server_params_list}')
+    print(f'Server params list has been established: {server_params_list}')
 # Connect to the MCP servers   and expose tools
     with MCPServerAdapter(server_params_list) as tools:
         print(f"✅ Loaded MCP tools: {[tool.name for tool in tools]}")
