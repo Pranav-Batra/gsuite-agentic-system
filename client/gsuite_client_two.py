@@ -3,6 +3,7 @@ from crewai_tools import MCPServerAdapter
 from mcp import StdioServerParameters
 import os
 from dotenv import load_dotenv
+import boto3
 
 load_dotenv('/Users/pranav/Desktop/GSuite-MCP/.env', override=True)
 

@@ -6,9 +6,23 @@ from google.oauth2.credentials import Credentials
 from google.oauth2 import id_token
 from google.auth.transport import requests as grequests
 from dotenv import load_dotenv
+import psycopg
 
 load_dotenv('/Users/pranav/Desktop/GSuite-MCP/.env')
 # GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")  # optional: used if you want to inspect id_token later
+DB_NAME = os.getenv('DBNAME')
+DB_USER = os.getenv('DBUSER')
+DB_PASSWORD = os.getenv('DBPASSWORD')
+DB_PORT = os.getenv('DBPORT')
+
+try:
+    conn = psycopg.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASSWORD, port=DB_PORT, autocommit=True)
+    cursor = conn.cursor()
+    print("PostgreSQL connection established successfully!")
+except Exception as e:
+    print(f"Error connecting to PostgreSQL: {e}")
+    conn = None
+    cursor = None
 
 REDIRECT_URI = "http://localhost:8080/oauth2callback"
 CLIENT_SECRETS_FILE = "credentials.json"
@@ -35,16 +49,16 @@ def get_google_client_config():
     with open(CLIENT_SECRETS_FILE, "r") as f:
         return json.load(f).get("web", {})
 
-def build_user_credentials_from_refresh(refresh_token: str) -> Credentials:
-    cfg = get_google_client_config()
-    return Credentials(
-        token=None,  # will be refreshed automatically
-        refresh_token=refresh_token,
-        token_uri="https://oauth2.googleapis.com/token",
-        client_id=cfg.get("client_id"),
-        client_secret=cfg.get("client_secret"),
-        scopes=SCOPES,
-    )
+# def build_user_credentials_from_refresh(refresh_token: str) -> Credentials:
+#     cfg = get_google_client_config()
+#     return Credentials(
+#         token=None,  # will be refreshed automatically
+#         refresh_token=refresh_token,
+#         token_uri="https://oauth2.googleapis.com/token",
+#         client_id=cfg.get("client_id"),
+#         client_secret=cfg.get("client_secret"),
+#         scopes=SCOPES,
+#     )
 
 # ---------------- Routes ----------------
 
@@ -108,13 +122,28 @@ def oauth2callback():
 
     # Persist refresh token
     if creds.refresh_token:
-        USER_TOKENS[email] = {"refresh_token": creds.refresh_token}
-        print(f"Stored refresh token for {email}")
+        try:
+            sql_query = """
+            INSERT INTO gsuite_users (email, refresh_token, s3_bucket_path)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (email) DO UPDATE SET
+                refresh_token = EXCLUDED.refresh_token,
+                s3_bucket_path = EXCLUDED.s3_bucket_path;
+            """
+            cursor.execute(sql_query, (email, creds.refresh_token, f'gsuite-mcp-logs/{email}'))
+        # USER_TOKENS[email] = {"refresh_token": creds.refresh_token}
+            print(f"Stored refresh token for {email}")
+        except Exception as e:
+            print("Didn't insert due to ", e)
     else:
         print(f"Warning: No refresh_token for {email}.")
-        if email not in USER_TOKENS:
+        cursor.execute("SELECT email FROM gsuite_users WHERE email = %s ESCAPE ''", (email,))
+        if not cursor.fetchall():
             return ("No refresh token received.\n You may need to remove the app "
             "from https://myaccount.google.com/permissions and try again."), 400
+        # if email not in USER_TOKENS:
+        #     return ("No refresh token received.\n You may need to remove the app "
+        #     "from https://myaccount.google.com/permissions and try again."), 400
 
     return redirect(url_for("client_request"))
 
@@ -137,7 +166,10 @@ def client_request():
         user_text = request.form.get("user_input") or (request.json or {}).get("user_input")
         print(f"User input from {user_email}: {user_text}")
 
-        rt = USER_TOKENS.get(user_email, {}).get("refresh_token")
+        cursor.execute("SELECT refresh_token FROM gsuite_users WHERE email = %s ESCAPE ''", (user_email,))
+        rt = cursor.fetchall()
+
+        # rt = USER_TOKENS.get(user_email, {}).get("refresh_token")
         if not rt:
             return jsonify({"error": "Missing refresh token. Please log out and log in again."}), 400
 
@@ -175,4 +207,4 @@ def client_request():
     # """
 
 if __name__ == "__main__":
-    app.run(port=8080, debug=True)
+    app.run(port=8080, debug=True, use_reloader=False)
