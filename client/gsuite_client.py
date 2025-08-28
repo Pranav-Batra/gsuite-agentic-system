@@ -109,7 +109,7 @@ def make_request(request: str):
             verbose=True,
             manager_llm = 'gemini/gemini-2.0-flash',
             process=Process.hierarchical,
-            output_log_file='client/logs'
+            output_log_file='temp'
         )
 
     #EXAMPLE USER INPUTS
@@ -122,3 +122,5 @@ def make_request(request: str):
         result = crew.kickoff(inputs={"user_prompt": request})
         print("\n FINAL RESULT:")
         print(result)
+
+make_request('Set up an event on google calendar from Aug 17 2025 2:45 PM to Aug 17 2025 4:15 PM')

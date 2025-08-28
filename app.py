@@ -137,7 +137,7 @@ def oauth2callback():
             print("Didn't insert due to ", e)
     else:
         print(f"Warning: No refresh_token for {email}.")
-        cursor.execute("SELECT email FROM gsuite_users WHERE email = %s ESCAPE ''", (email,))
+        cursor.execute("SELECT email FROM gsuite_users WHERE email = %s", (email,))
         if not cursor.fetchall():
             return ("No refresh token received.\n You may need to remove the app "
             "from https://myaccount.google.com/permissions and try again."), 400
@@ -166,8 +166,9 @@ def client_request():
         user_text = request.form.get("user_input") or (request.json or {}).get("user_input")
         print(f"User input from {user_email}: {user_text}")
 
-        cursor.execute("SELECT refresh_token FROM gsuite_users WHERE email = %s ESCAPE ''", (user_email,))
-        rt = cursor.fetchall()
+        cursor.execute("SELECT refresh_token FROM gsuite_users WHERE email = %s", (user_email,))
+        rt = cursor.fetchone()
+        rt = rt[0]
 
         # rt = USER_TOKENS.get(user_email, {}).get("refresh_token")
         if not rt:
@@ -185,7 +186,7 @@ def client_request():
         }
 
         try:
-            result = make_request(user_text, user_credentials)
+            result = make_request(user_text, user_credentials, user_email)
             return jsonify({"result": result})
         except Exception as e:
             print("MCP error:", e)

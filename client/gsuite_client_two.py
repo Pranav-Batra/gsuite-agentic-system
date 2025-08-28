@@ -4,11 +4,20 @@ from mcp import StdioServerParameters
 import os
 from dotenv import load_dotenv
 import boto3
+from . import s3_helper
+import psycopg
+
+
+
+s3_client = boto3.client('s3')
 
 load_dotenv('/Users/pranav/Desktop/GSuite-MCP/.env', override=True)
+BUCKET_NAME = os.getenv('S3_BUCKET_NAME')
 
-def make_request(request: str, user_credentials: dict):
-    print("Request is starting.")
+      # Ensure the prefix ends with a '/' for folders
+
+def make_request(request: str, user_credentials: dict, email_str: str):
+    folder_path = email_str + '/'
 # Setup LLM
     llm = LLM(
         model="gemini/gemini-2.0-flash"
@@ -57,7 +66,7 @@ def make_request(request: str, user_credentials: dict):
             backstory="As a specialist, you don't decide what to do. You are given a specific task related to Google Calendar and you execute it perfectly using your tools.",
             tools=gcal_tools,
             llm=llm,
-            verbose=True
+            verbose=True,
         )
 
         gmail_agent = Agent(
@@ -133,6 +142,7 @@ def make_request(request: str, user_credentials: dict):
             verbose=True,
             manager_llm=llm,
             process=Process.hierarchical,
+            output_log_file='temp'
         )
 
         # --- EXAMPLE USER INPUTS ---
@@ -148,7 +158,15 @@ def make_request(request: str, user_credentials: dict):
         print("## FINAL CREW RESULT ##")
         print("########################")
         print(result)
-        return result.raw
 
+
+        file_count = s3_helper.count_files_in_folder(client=s3_client, folder_path = folder_path, bucket_name = BUCKET_NAME)
+        # AWS S3 configuration
+        dest_file_name = f'logs_{file_count + 1}.txt'
+        s3_helper.upload_file_to_folder(client=s3_client, folder_path=folder_path, bucket_name = BUCKET_NAME, 
+                                        local_file_path = 'temp.txt', name_of_file_for_bucket=dest_file_name)
+        
+        os.remove('temp.txt')
+        return result.raw
 if __name__ == '__main__':
-    make_request("Set up an event on my google calendar for tomorrow at 2 PM for a 'Team Sync'.")
+    make_request("Set up an event on my google calendar for August 28th, 2025 at 2 PM for a 'Team Sync'.")
