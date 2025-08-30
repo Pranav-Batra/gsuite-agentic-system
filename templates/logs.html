@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Main</title>
+  <title>Logs</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -17,39 +17,37 @@
       border-radius: 12px;
       padding: 30px;
       box-shadow: 0px 6px 15px rgba(0,0,0,0.1);
-      text-align: center; /* Center everything inside */
+      text-align: center;
     }
     h2 {
       margin-top: 0;
       margin-bottom: 20px;
       color: #4a4a4a;
     }
-    input[type="text"] {
-      width: 80%; /* narrower to look centered */
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      margin-bottom: 20px;
+    ul {
+      list-style: none;
+      padding: 0;
     }
-    button {
-      padding: 12px 20px;
-      border: none;
+    li {
+      margin: 10px 0;
+    }
+    a.download-btn {
+      padding: 8px 16px;
       border-radius: 6px;
       background-color: #667eea;
       color: white;
+      text-decoration: none;
       font-weight: bold;
-      cursor: pointer;
       transition: background 0.2s ease;
-      margin-bottom: 20px;
     }
-    button:hover {
+    a.download-btn:hover {
       background-color: #5a67d8;
     }
     .links {
-      margin-top: 15px;
+      margin-top: 20px;
       display: flex;
       justify-content: center;
-      gap: 20px; /* space between links */
+      gap: 20px;
     }
     .links a {
       font-size: 0.95em;
@@ -64,21 +62,22 @@
 </head>
 <body>
   <div class="container">
-    <h2>Hi, {{ user_email }} 👋</h2>
-    <form method="POST">
-      <input type="text" name="user_input" placeholder="Ask Google APIs via MCP"/>
-      <br>
-      <button type="submit">Send</button>
-    </form>
-
-    {% if result %}
-        <div style="margin-top: 20px; text-align: left; padding: 15px; border: 1px solid #ddd; border-radius: 6px; background: #f9f9f9;">
-            <strong>Result:</strong>
-            <p>{{ result }}</p>
-        </div>
+    <h2>Your Logs</h2>
+    {% if files %}
+      <ul>
+        {% for file in files %}
+          <li>
+            {{ file.split('/')[-1] }}  
+            <a class="download-btn" href="{{ url_for('download_log', key=file) }}">Download</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No logs available.</p>
     {% endif %}
+
     <div class="links">
-      <a href="/logs">View Logs</a>
+      <a href="/">Home</a>
       <a href="/logout">Logout</a>
     </div>
   </div>

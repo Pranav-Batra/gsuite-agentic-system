@@ -75,7 +75,7 @@ def make_request(request: str, user_credentials: dict, email_str: str):
             backstory="As a specialist, you don't decide what to do. You are given a specific task related to Gmail and you execute it perfectly using your tools.",
             tools=gmail_tools,
             llm=llm,
-            verbose=True
+            verbose=True,
         )
 
         gdrive_agent = Agent(
@@ -84,7 +84,7 @@ def make_request(request: str, user_credentials: dict, email_str: str):
             backstory="As a specialist, you don't decide what to do. You are given a specific task related to Google Drive and you execute it perfectly using your tools.",
             tools=gdrive_tools,
             llm=llm,
-            verbose=True
+            verbose=True,
         )
 
         # --- TASK DEFINITIONS ---
@@ -142,7 +142,7 @@ def make_request(request: str, user_credentials: dict, email_str: str):
             verbose=True,
             manager_llm=llm,
             process=Process.hierarchical,
-            output_log_file='temp'
+            output_log_file='temp',
         )
 
         # --- EXAMPLE USER INPUTS ---

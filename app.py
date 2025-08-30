@@ -7,6 +7,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as grequests
 from dotenv import load_dotenv
 import psycopg
+import boto3
 
 load_dotenv('/Users/pranav/Desktop/GSuite-MCP/.env')
 # GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")  # optional: used if you want to inspect id_token later
@@ -14,6 +15,9 @@ DB_NAME = os.getenv('DBNAME')
 DB_USER = os.getenv('DBUSER')
 DB_PASSWORD = os.getenv('DBPASSWORD')
 DB_PORT = os.getenv('DBPORT')
+BUCKET_NAME = os.getenv('S3_BUCKET_NAME')
+s3_client = boto3.client('s3')
+
 
 try:
     conn = psycopg.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASSWORD, port=DB_PORT, autocommit=True)
@@ -161,6 +165,7 @@ def client_request():
         return redirect(url_for("index"))
 
     user_email = session["email"]
+    result = None
 
     if request.method == "POST":
         user_text = request.form.get("user_input") or (request.json or {}).get("user_input")
@@ -187,13 +192,13 @@ def client_request():
 
         try:
             result = make_request(user_text, user_credentials, user_email)
-            return jsonify({"result": result})
+            # return jsonify({"result": result})
         except Exception as e:
             print("MCP error:", e)
             return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
     # Simple form UI for quick testing
-    return render_template('main.html', user_email=user_email)
+    return render_template('main.html', user_email=user_email, result = result)
     # return f"""
     # <html>
     #   <body>
@@ -206,6 +211,23 @@ def client_request():
     #   </body>
     # </html>
     # """
+@app.route('/logs', methods = ['GET', 'POST'])
+def view_logs():
+    folder_pref = session['email']
+    folder_pref += '/'
+    # list objects in your logs folder
+    response = s3_client.list_objects_v2(Bucket=BUCKET_NAME, Prefix=folder_pref)
+    files = [obj["Key"] for obj in response.get("Contents", [])]
+    return render_template('logs.html', files = files)
 
+@app.route("/logs/download/<path:key>")
+def download_log(key):
+    # generate a temporary URL for this object
+    url = s3_client.generate_presigned_url(
+        'get_object',
+        Params={'Bucket': BUCKET_NAME, 'Key': key},
+        ExpiresIn=300  # 5 minutes
+    )
+    return redirect(url)
 if __name__ == "__main__":
     app.run(port=8080, debug=True, use_reloader=False)
